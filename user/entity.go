@@ -8,9 +8,9 @@ type User struct {
 	Name           string
 	Occupation     string
 	Email          string
-	PasswordHash  string
+	PasswordHash   string
 	AvatarFileName string
 	Role           string
-	CreatedAt       time.Time
+	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }
