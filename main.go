@@ -5,7 +5,6 @@ import (
 	"bwastartup2/user"
 	"log"
 
-	// "github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -18,6 +17,24 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+
+	userRepository := user.NewRepository(db)
+	userServices := user.NewService(userRepository)
+
+	userHandler := handler.NewUserHandler(userServices)
+
+	router := gin.Default()
+	api := router.Group("/api/v1")
+
+	api.POST("/users", userHandler.RegisterUser)
+	api.POST("/sessions", userHandler.Login)
+	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
+	api.POST("/avatars", userHandler.UploadAvatar)
+
+	router.Run()
+
+	// manual update avatar user
+	// userServices.SaveAvatar(1, "images/1-profile.png")
 
 	// fmt.Println("Connection to database is good")
 
@@ -35,9 +52,8 @@ func main() {
 	// router.Run()
 
 	// input user
-	userRepository := user.NewRepository(db)
-	userServices := user.NewService(userRepository)
 
+	// manual login
 	// input := user.LoginInput{
 	// 	Email: "prieze29@driveme.id",
 	// 	Password: "passwords",
@@ -51,17 +67,6 @@ func main() {
 
 	// fmt.Println(user.Email)
 	// fmt.Println(user.Name)
-	
-	userHandler := handler.NewUserHandler(userServices)
-	
-	router := gin.Default()
-	api := router.Group("/api/v1")
-	
-	api.POST("/users", userHandler.RegisterUser)
-	api.POST("/sessions", userHandler.Login)
-	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
-	
-	router.Run()
 
 	// login user
 	// userByEmail, err := userRepository.FindByEmail("prieze29@driveme.id")
