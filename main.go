@@ -3,10 +3,13 @@ package main
 import (
 	"bwastartup2/auth"
 	"bwastartup2/handler"
+	"bwastartup2/helper"
 	"bwastartup2/user"
-	"fmt"
 	"log"
+	"net/http"
+	"strings"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -24,23 +27,6 @@ func main() {
 	userServices := user.NewService(userRepository)
 	authService := auth.NewService()
 
-	// token, err := authService.ValidateToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxfQ.JJjGYA9PExsu83H51Q1NcF_fuNpXUMWu0KbkrcHW1Ac")
-	// if err != nil {
-	// 	fmt.Println("ERROR")
-	// 	fmt.Println("ERROR")
-	// 	fmt.Println("ERROR")
-	// }
-
-	// if token.Valid {
-	// 	fmt.Println("VALID")
-	// 	fmt.Println("VALID")
-	// 	fmt.Println("VALID")
-	// }else {
-	// 	fmt.Println("INVALID")
-	// 	fmt.Println("INVALID")
-	// 	fmt.Println("INVALID")
-	// }
-
 	userHandler := handler.NewUserHandler(userServices, authService)
 
 	router := gin.Default()
@@ -49,7 +35,7 @@ func main() {
 	api.POST("/users", userHandler.RegisterUser)
 	api.POST("/sessions", userHandler.Login)
 	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
-	api.POST("/avatars", userHandler.UploadAvatar)
+	api.POST("/avatars", authMiddleware(authService, userServices), userHandler.UploadAvatar)
 
 	router.Run()
 
@@ -125,6 +111,54 @@ func main() {
 
 }
 
+func authMiddleware(authService auth.Service, userService user.Service) gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+
+		if !strings.Contains(authHeader, "Bearer") {
+			response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
+			return
+		}
+
+		// authtoken => Bearer tokentokentokentoken
+		tokenString := ""
+		arrayToken := strings.Split(authHeader, " ")
+		if len(arrayToken) == 2 {
+			tokenString = arrayToken[1]
+		}
+
+		token, err := authService.ValidateToken(tokenString)
+		if err != nil {
+			response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
+			return
+		}
+
+		claim, ok := token.Claims.(jwt.MapClaims)
+
+		if !ok || !token.Valid {
+			response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
+			return
+		}
+
+		userID := int(claim["user_id"].(float64))
+
+		user, err := userService.GetUserByID(userID)
+		if err != nil {
+			response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
+			return
+		}
+
+		c.Set("currentUser", user)
+
+	}
+
+}
+
 // func handler(c *gin.Context)  {
 // 	dsn := "host=localhost user=postgres password=Admin1234% dbname=bwastartup port=5432 sslmode=disable TimeZone=Asia/Jakarta"
 // 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -133,3 +167,11 @@ func main() {
 // 		log.Fatal(err.Error())
 // 	}
 // }
+
+// didalam midleware ada apa saja
+// ambil nilai header Authorization (harus mengirim auth di header => Bearer tokentokentoken)
+// dari header Authorization, kita ambil nilai tokennya saja
+// kita validasi token => menggukana auth/service.go
+// dari token bisa ambil user_id
+// ambil user dari db berdasarkan user_id lewat service
+// kalau usernya ada kita set context isinya user

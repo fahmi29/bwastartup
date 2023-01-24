@@ -165,7 +165,8 @@ func (h *userHandler) UploadAvatar(c *gin.Context) {
 	}
 
 	// harusnya dapet dari JWT tapi sabar
-	userID := 1
+	currentUser := c.MustGet("currentUser").(user.User) // => code ini dapet dari set token pada file main.go
+	userID := currentUser.ID
 
 	path := fmt.Sprintf("images/%d-%s", userID, file.Filename)
 
