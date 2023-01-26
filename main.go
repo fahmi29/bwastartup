@@ -17,9 +17,9 @@ import (
 )
 
 func main() {
-	// dsn := "host=localhost user=postgres password=Admin1234% dbname=bwastartup port=5432 sslmode=disable TimeZone=Asia/Jakarta"
+	dsn := "host=localhost user=postgres password=Admin1234% dbname=bwastartup port=5432 sslmode=disable TimeZone=Asia/Jakarta"
 	// online db
-	dsn := "host=tiny.db.elephantsql.com user=bkmocuis password=QodwpnqegQNRyRlarmOrNkCl3ArMdfc5 dbname=bkmocuis port=5432 sslmode=disable TimeZone=Asia/Jakarta"
+	// dsn := "host=tiny.db.elephantsql.com user=bkmocuis password=QodwpnqegQNRyRlarmOrNkCl3ArMdfc5 dbname=bkmocuis port=5432 sslmode=disable TimeZone=Asia/Jakarta"
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
@@ -51,6 +51,7 @@ func main() {
 	campaignHandler := handler.NewCampaignHandler(campaignService)
 
 	router := gin.Default()
+	router.Static("/images", "./images")
 	api := router.Group("/api/v1")
 
 	api.POST("/users", userHandler.RegisterUser)
@@ -59,6 +60,7 @@ func main() {
 	api.POST("/avatars", authMiddleware(authService, userServices), userHandler.UploadAvatar)
 
 	api.GET("/campaigns", campaignHandler.GetCampaigns)
+	api.GET("/campaigns/:id", campaignHandler.GetCampaign)
 
 	router.Run()
 
