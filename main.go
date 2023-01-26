@@ -17,9 +17,9 @@ import (
 )
 
 func main() {
-	dsn := "host=localhost user=postgres password=Admin1234% dbname=bwastartup port=5432 sslmode=disable TimeZone=Asia/Jakarta"
+	// dsn := "host=localhost user=postgres password=Admin1234% dbname=bwastartup port=5432 sslmode=disable TimeZone=Asia/Jakarta"
 	// online db
-	// dsn := "host=tiny.db.elephantsql.com user=bkmocuis password=QodwpnqegQNRyRlarmOrNkCl3ArMdfc5 dbname=bkmocuis port=5432 sslmode=disable TimeZone=Asia/Jakarta"
+	dsn := "host=tiny.db.elephantsql.com user=bkmocuis password=QodwpnqegQNRyRlarmOrNkCl3ArMdfc5 dbname=bkmocuis port=5432 sslmode=disable TimeZone=Asia/Jakarta"
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
